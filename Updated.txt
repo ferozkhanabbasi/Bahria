@@ -1,0 +1,293 @@
+# load the required packages
+library(shiny)
+require(shinydashboard)
+library(ggplot2)
+library(dplyr)
+library(shiny)
+library(Rcpp)
+library(tidyverse)
+library(leaflet)
+library(ggplot2)
+library(purrr)
+library(tibble)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(readr)
+library(DT)
+library(sf)
+library(forcats)
+#library(sp)
+#library(rsconnect)
+#library(shinyWidgets)
+#library(stplanr)
+#library(shinythemes)
+#library(mapview)
+#library(colorspace)
+library(shinydashboard)
+library(shinydashboardPlus)
+library(leafpop)
+library(leafem)
+library(states)
+mvdata=read.csv("Sector_L.csv", header=TRUE, sep=",")
+u="oct_19.kml"
+kml=read_sf(u,layer="My Places")
+bahl_sf=left_join(kml, mvdata)
+pal1 <- colorNumeric("RdYlBu",domain = bahl_sf$MEDV)
+
+bahlpoly <- geojsonio::geojson_read("map.geojson", what = "sp")
+
+
+class(bahlpoly)
+m <- leaflet(bahlpoly) %>%
+  addProviderTiles("MapBox", options = providerTileOptions(
+    id = "mapbox.light",
+    accessToken = Sys.getenv('MAPBOX_ACCESS_TOKEN')))
+
+bins <- c(0, 10, 20, 50, 100, 200, 500, 1000, Inf)
+pal <- colorBin("YlOrRd", bins = bins)
+m %>% addPolygons(
+  fillColor = ~pal(Price),
+  weight = 2,
+  opacity = 1,
+  color = "white",
+  dashArray = "3",
+  fillOpacity = 0.7)
+
+m %>% addPolygons(
+  fillColor = ~pal(Price),
+  weight = 2,
+  opacity = 1,
+  color = "white",
+  dashArray = "3",
+  fillOpacity = 0.7,
+  highlight = highlightOptions(
+    weight = 5,
+    color = "#666",
+    dashArray = "",
+    fillOpacity = 0.7,
+    bringToFront = TRUE))
+
+labels <- sprintf(
+  "<strong>%s</strong><br/>%g people / mi<sup>2</sup>",
+  bahlpoly$name, bahlpoly$Price
+  
+) %>% lapply(htmltools::HTML)
+
+m <- m %>% addPolygons(
+  fillColor = ~pal(Price),
+  weight = 2,
+  opacity = 1,
+  color = "white",
+  dashArray = "3",
+  fillOpacity = 0.7,
+  highlight = highlightOptions(
+    weight = 5,
+    color = "#666",
+    dashArray = "",
+    fillOpacity = 0.7,
+    bringToFront = TRUE),
+  label = labels,
+  labelOptions = labelOptions(
+    style = list("font-weight" = "normal", padding = "3px 8px"),
+    textsize = "15px",
+    direction = "auto"))
+
+lulu1=leaflet(bahl_sf)%>%
+  addProviderTiles(providers$OpenStreetMap) %>%
+  addCircleMarkers(data = bahl_sf,color = ~pal1(MEDV),fill = TRUE, fillColor = ~pal1(MEDV),fillOpacity = 0.8,radius = 7,popup = leafpop::popupTable(bahl_sf,zcol = c("Name","PLT","SOUTH","HGW","PARK","SCH","PLAZA","HOSP","MASJID","NALLAH","FILTER","MEDV"),feature.id = FALSE,row.numbers = FALSE))%>%
+  addLegend("bottomright", values = ~MEDV,pal=pal1,title = "Value in PKR Millions", opacity = 1)
+
+
+recommendation <- read.csv('recommendation.csv',stringsAsFactors = F,header=T)
+
+#head(recommendation)
+
+
+
+#Dashboard header carrying the title of the dashboard
+header <- dashboardHeader(title = "Housing Scheme")
+tags$img(src = "logo.jpg")
+#Sidebar content of the dashboard
+sidebar <- dashboardSidebar(
+    sidebarMenu(
+                # first menu item
+                menuItem("Bahria Town", tabName = "Dashboard", icon = icon("dashboard")),
+                
+                # second menu item with 2 sub menus
+                menuItem('Sectors',
+                         icon = icon('line-chart'),
+                         menuSubItem('Sector L',
+                                     tabName = 'SectorL',
+                                     icon = icon('line-chart')),
+                         menuSubItem('Sector H',
+                                     tabName = 'SectorH',
+                                     icon = icon('line-chart')
+                                     
+                         ))),
+              menuItem("DHA", tabName = "Dashboard", icon = icon("dashboard"))
+  )
+
+
+
+f1 <- frow1 <- fluidRow( align = "center",
+ 
+       bootstrapPage(
+        div(style="display:inline-block",selectInput("typeInput", "Plot type(sq-ft)", choices = c(unique(as.character(bahl_sf$PLT))), selected = "1")),
+        div(style="display:inline-block",selectInput("Southopen", "south open?",  choices = c("Y", "N"), selected = 1)),
+        div(style="display:inline-block",selectInput(inputId="minPrice", label="Min Price",choices = c(1,2,3,4,5), selected = 1)),
+        div(style="display:inline-block",selectInput(inputId="maxPrice", label="Max Price", choices = c(1,2,3,4,5), selected = 1))
+        
+       ),
+       column(12,align="center",
+       actionButton("successButton", "Search", class="btn-success")
+))
+frx <- fluidRow(
+  m
+)
+frow2 <- fluidRow(
+  br(),
+  bootstrapPage(column( 10,
+  style="display:inline-block",
+        leafletOutput(outputId = 'MapPlot2',width = 1300, height = 350)),
+  column( 2,
+  box( status = "primary", solidHeader = F, width =20,height = 350,
+            
+           boxProfile(
+                   src='xyz.png',
+                   title = span( icon("user"), "Shoaib Qazi"),
+                   subtitle =  span( icon("bar-chart-o"), "PLOT"),
+                   boxProfileItemList(
+                     bordered = FALSE,
+                     boxProfileItem(
+                       title =span( icon("envelope", lib = "font-awesome"), "Email"),
+                       description = "shoaib.qazi@gmail.com"
+                     ),
+                     boxProfileItem(
+                       title = span( icon("list"), "Remarks"),
+                       description = "Don't Wait, Buy it!"
+                     ),
+                     boxProfileItem(
+                       title = span( icon("thumbs-up"), "Contact#"),
+                       description = "1234567"
+                     ),
+                     boxProfileItem(
+                       title =  span( icon("dollar"), "Price#"),
+                       description = "20 Millions"
+                     ),
+                     boxProfileItem(
+                       title = "PLOT",
+                       description = "30x60"
+                     )
+                     
+               )                                      
+            )
+  ))),
+  br(),
+   dataTableOutput('dataTable'),
+  br()
+)
+fr <- fluidRow (
+  br(),
+#  leafletOutput(outputId = 'MapPlot2', height = 350),
+  br(),
+  dataTableOutput('dataTable1'),
+  br()
+)
+
+
+
+# combine the two fluid rows to make the body
+body <- dashboardBody(
+                      tabItems(
+                        tabItem("Dashboard",frow1, frow2, frx),
+                        tabItem("SectorL",frow1,frx, fr),
+                        tabItem("SectorH", h4("This is for Sector H page, we do not have dataset"))
+                      )
+                      )
+
+#completing the ui part with dashboardPage
+ui <- dashboardPage(title = 'Bahria', header, sidebar, body, skin='red')
+
+# create the server functions for the dashboard
+server <- function(input, output) {
+
+
+
+  output$MapPlot2 <- renderLeaflet({
+    lulu1
+  })
+  output$MapPlotSecL <- renderLeaflet({
+    lulu1
+  })
+  output$dataTable <- renderDT(
+    datatable(mvdata, options=list(columnDefs = list(list(visible=FALSE, targets=c(3,7,8,9,10,11,13,15,18,21,22,23,24) )), scrollX = TRUE)), # data
+    class = "display nowrap compact", # style
+    filter = "top" # location of column filters
+  )
+  output$dataTable1 <- renderDT(
+    datatable(mvdata, options=list(columnDefs = list(list(visible=FALSE, targets=c(3,7,8,9,10,11,13,15,18,21,22,23,24) )),scrollX = TRUE)), # data
+    class = "display nowrap compact", # style
+    filter = "top" # location of column filters
+    
+  )
+  div(style="display:inline-block",
+  observeEvent (input$typeInput,{
+    filteredz <-bahl_sf %>%
+      dplyr::filter(bahl_sf$PLT == input$typeInput)
+    leafletProxy("MapPlot2")%>% clearMarkers() %>%
+      addCircleMarkers(data = filteredz,radius = 7,color = ~pal1(MEDV),fill = TRUE, fillColor = ~pal1(MEDV),fillOpacity = 0.8,popup = leafpop::popupTable(filteredz,zcol = c("Name","PLT","SOUTH","HGW","PARK","SCH","PLAZA","HOSP","MASJID","NALLAH","FILTER","MEDV"),feature.id = FALSE,row.numbers = FALSE))
+  }),
+
+  observeEvent (input$priceInput,{
+    filteredn <-bahl_sf %>%
+      dplyr::filter(bahl_sf$MEDV == input$priceInput)
+    leafletProxy("MapPlot2")%>% clearMarkers() %>%
+      addCircleMarkers(data = filteredn,radius = 7,color = ~pal1(MEDV),fill = TRUE, fillColor = ~pal1(MEDV),fillOpacity = 0.8,popup = leafpop::popupTable(filteredn,zcol = c("Name","PLT","SOUTH","HGW","PARK","SCH","PLAZA","HOSP","MASJID","NALLAH","FILTER","MEDV"),feature.id = FALSE,row.numbers = FALSE))
+  }),
+
+  observeEvent (input$Southopen,{
+    filteredm <-bahl_sf %>%
+      dplyr::filter(bahl_sf$SOUTH == input$Southopen)
+    leafletProxy("MapPlot2")%>% clearMarkers() %>%
+      addCircleMarkers(data = filteredm,radius = 10,color = ~pal1(MEDV),fill = TRUE, fillColor = ~pal1(MEDV),fillOpacity = 0.8,popup = leafpop::popupTable(filteredm,zcol = c("Name","PLT","SOUTH","HGW","PARK","SCH","PLAZA","HOSP","MASJID","NALLAH","FILTER","MEDV"),feature.id = FALSE,row.numbers = FALSE))
+  }))
+  output$revenuebyPrd <- renderPlot({
+
+  })
+
+
+  output$revenuebyRegion <- renderPlot({
+  })
+
+
+  #some data manipulation to derive the values of KPI boxes
+  total.revenue <- sum(recommendation$Revenue)
+  sales.account <- recommendation %>% group_by(Account) %>% summarise(value = sum(Revenue)) %>% filter(value==max(value))
+  prof.prod <- recommendation %>% group_by(Product) %>% summarise(value = sum(Revenue)) %>% filter(value==max(value))
+
+
+  #creating the valueBoxOutput content
+  output$value1 <- renderValueBox({
+    valueBox(
+      formatC(sales.account$value, format="d", big.mark=',')
+      ,paste('Top Account:',sales.account$Account)
+      ,icon = icon("stats",lib='glyphicon')
+      ,color = "purple")
+
+
+  })
+  output$value2 <- renderValueBox({
+
+    valueBox(
+      formatC(total.revenue, format="d", big.mark=',')
+      ,'Total Expected Revenue'
+      ,icon = icon("gbp",lib='glyphicon')
+      ,color = "green")
+
+  })
+
+}
+
+
+shinyApp(ui, server)

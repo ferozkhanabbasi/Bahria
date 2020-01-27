@@ -1,0 +1,12 @@
+name: dashboard
+title: dashboard
+username:
+account: ferozkhan
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1620574
+bundleId: 2694800
+url: https://ferozkhan.shinyapps.io/dashboard/
+when: 1577480999.66874
+asMultiple: FALSE
+asStatic: FALSE

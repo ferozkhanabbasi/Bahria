@@ -1,0 +1,13 @@
+name: Behria
+title: Behria
+username:
+account: ferozkhan
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1621174
+bundleId: 2756409
+url: https://ferozkhan.shinyapps.io/Behria/
+when: 1580148093.92449
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: SectorC.kml|Updated.txt|Updated_for sector A.txt|updated_L_Sector.kml|Updated1.txt|UpdatedC.txt
